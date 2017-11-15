@@ -1,0 +1,118 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.7.RELEASE'
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
+}
+
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+mainClassName = 'com.nguacon.platform.Application'
+
+allprojects {
+    group = "com.nguacon"
+    apply plugin: 'java'
+    repositories {
+        mavenCentral()
+    }
+
+    version = '1.0.0-SNAPSHOT'
+}
+
+
+subprojects {
+    compileJava {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        options.encoding = 'UTF-8'
+    }
+
+    compileTestJava {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        options.encoding = 'UTF-8'
+        options.compilerArgs += "-parameters"
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = ["src/main/java"]
+            }
+
+            resources {
+                srcDirs = ["src/main/resources"]
+            }
+        }
+        test {
+            java {
+                srcDirs = ["src/test/java"]
+            }
+
+            resources{
+                srcDirs = ["src/test/resources"]
+            }
+        }
+    }
+
+    apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        testCompile("org.springframework.boot:spring-boot-starter-test")
+        compile("org.springframework.boot:spring-boot-starter")
+        compile("org.springframework.boot:spring-boot-starter-web")
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'
+        compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
+        compile (group: 'commons-configuration', name: 'commons-configuration', version: '1.10')
+    }
+
+}
+
+project(':app1') {
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
+project(':app2') {
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
+import com.github.jengelman.gradle.plugins.shadow.transformers.*
+project(':platform') {
+    apply plugin: 'com.github.johnrengelman.shadow'
+    shadowJar {
+        manifest {
+            attributes(
+                'Main-Class': 'com.nguacon.platform.Application'
+            )
+        }
+
+        transform(PropertiesFileTransformer) {
+            paths = ['META-INF/spring.*' ]
+            mergeStrategy = "append"
+        }
+    }
+
+    bootRepackage {
+        enabled = false
+    }
+
+    dependencies {
+        compile project(':app1')
+        compile project(':app2')
+    }
+}
